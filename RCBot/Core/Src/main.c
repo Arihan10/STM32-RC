@@ -76,7 +76,20 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while(1) {
+    /* USER CODE END WHILE */
 
+    /* USER CODE BEGIN 3 */
+	// Turn LED on during transmission
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
+
+	// Send complete message at once
+	HAL_UART_Transmit(&huart1, uart_tx_buffer, strlen((char*)uart_tx_buffer), UART_TIMEOUT);
+
+	// Turn LED off after transmission
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
+
+	// Wait between messages
+	HAL_Delay(1000);
   }
   /* USER CODE END 3 */
 }
