@@ -14,7 +14,7 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 #define UART_TIMEOUT 100   // Timeout for UART reception in ms
-#define MESSAGE_LENGTH 18  // Length of "Hello from STM32!\r\n"
+#define MESSAGE_LENGTH 6   // Length of "XXXX\r\n" where XXXX is the ADC value
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -27,6 +27,7 @@ UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 uint8_t message[MESSAGE_LENGTH];  // Buffer to store received message
+uint16_t received_value;         // Variable to store converted ADC value
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -85,7 +86,17 @@ int main(void)
 	  // Toggle LED when full message received
 	  HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
 
-	  // Optional: Echo complete message to UART2 for debug
+	  // Null terminate the string for safe conversion
+	  message[4] = '\0';
+
+	  // Convert string to number
+	  received_value = atoi((char*)message);
+
+	  double horizontalRatio = 2 * ((double)received_value / 4096) - 1;
+	  double rotationValue = 750 + 500*horizontalRatio;
+	  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, rotationValue);
+
+	  // Optional: Echo received value to UART2 for debug
 	  HAL_UART_Transmit(&huart2, message, MESSAGE_LENGTH, UART_TIMEOUT);
 	}
   }
@@ -226,6 +237,14 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PA1 */
+  GPIO_InitStruct.Pin = GPIO_PIN_1;
+  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  GPIO_InitStruct.Alternate = GPIO_AF1_TIM2;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pin : PA5 */
   GPIO_InitStruct.Pin = GPIO_PIN_5;

@@ -27,7 +27,7 @@ UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-uint8_t uart_tx_buffer[] = "Hello from STM32!\r\n";  // Message to transmit
+uint8_t uart_tx_buffer[10];  // Buffer for ADC value string (change from previous message)
 uint16_t readValue;
 /* USER CODE END PV */
 
@@ -84,20 +84,24 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
-	HAL_ADC_Start(&hadc1);
-	HAL_ADC_PollForConversion(&hadc1, 50);
-	readValue = HAL_ADC_GetValue(&hadc1);
-	HAL_ADC_Stop(&hadc1);
-	HAL_Delay(50); // Adjust delay for slower updates
+	  HAL_ADC_Start(&hadc1);
+	  HAL_ADC_PollForConversion(&hadc1, 50);
+	  readValue = HAL_ADC_GetValue(&hadc1);
+	  HAL_ADC_Stop(&hadc1);
 
-	// Turn LED on during transmission
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
+	  // Format ADC value into string
+	  sprintf((char*)uart_tx_buffer, "%04d\r\n", readValue);
 
-	// Send complete message at once
-	HAL_UART_Transmit(&huart1, uart_tx_buffer, strlen((char*)uart_tx_buffer), UART_TIMEOUT);
+	  // Turn LED on during transmission
+	  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
 
-	// Turn LED off after transmission
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
+	  // Send formatted ADC value
+	  HAL_UART_Transmit(&huart1, uart_tx_buffer, 6, UART_TIMEOUT); // 4 digits + \r\n = 6 bytes
+
+	  // Turn LED off after transmission
+	  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
+
+	  HAL_Delay(50); // Adjust delay for desired update rate
   }
   /* USER CODE END 3 */
 }
